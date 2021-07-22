@@ -174,6 +174,7 @@ void handle_hispeed( BOOL highspeed );
 #define DSCR_STRING_TYPE 3
 #define DSCR_DEVQUAL_TYPE 6
 #define DSCR_OTHERSPD_TYPE 7
+#define DSCR_BOS_TYPE 15
 
 /* usb spec 2 */
 #define DSCR_BCD 2

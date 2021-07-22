@@ -40,7 +40,11 @@ ENDPOINT_TYPE_ISO	= 1
 ENDPOINT_TYPE_BULK	= 2
 ENDPOINT_TYPE_INT	= 3
 
-.globl _dev_dscr, _dev_qual_dscr, _highspd_dscr, _fullspd_dscr, _dev_strings, _dev_strings_end
+; Vendor request for MS OS 2.0 descriptors
+; Choose this value so that it won't collide with any other standard requests and vendor requests.
+VENDOR_MS_OS_20_REQUEST = 0xCC
+
+.globl _dev_dscr, _dev_qual_dscr, _highspd_dscr, _fullspd_dscr, _bos_dscr, _msos20_dscr, _dev_strings, _dev_strings_end
 .area DSCR_AREA (CODE)
 
 ; -----------------------------------------------------------------------------
@@ -49,7 +53,7 @@ ENDPOINT_TYPE_INT	= 3
 _dev_dscr:
 	.db	dev_dscr_end - _dev_dscr
 	.db	DSCR_DEVICE_TYPE
-	.dw	0x0002			; USB 2.0
+	.dw	0x1002			; USB 2.1
 	.db	0xff			; Class (vendor specific)
 	.db	0xff			; Subclass (vendor specific)
 	.db	0xff			; Protocol (vendor specific)
@@ -155,6 +159,66 @@ fullspd_dscr_end:
 	.db	0x00			; Polling interval (ignored for bulk)
 
 fullspd_dscr_realend:
+
+	.even
+
+; -----------------------------------------------------------------------------
+; BOS ( Binary Device Object Store )
+; -----------------------------------------------------------------------------
+
+_bos_dscr:
+	.db	0x05
+	.db	0x0F
+	.db	(bos_dscr_end - _bos_dscr) % 256
+	.db	(bos_dscr_end - _bos_dscr) / 256
+	.db	0x01
+
+	.db	0x1C
+	.db	0x10
+	.db	0x05
+	.db	0x00
+	.db	0xDF
+	.db	0x60
+	.db	0xDD
+	.db	0xD8
+	.db	0x89
+	.db	0x45
+	.db	0xC7
+	.db	0x4C
+	.db	0x9C
+	.db	0xD2
+	.db	0x65
+	.db	0x9D
+	.db	0x9E
+	.db	0x64
+	.db	0x8A
+	.db	0x9F
+	.db	0x00
+	.db	0x00
+	.db	0x03
+	.db	0x06
+	.db	(msos20_dscr_end - _msos20_dscr) % 256
+	.db	(msos20_dscr_end - _msos20_dscr) / 256
+_VENDOR_MS_OS_20_REQUEST::
+	.db	VENDOR_MS_OS_20_REQUEST
+	.db	0x00
+bos_dscr_end:
+
+	.even
+
+; -----------------------------------------------------------------------------
+; MS OS 2.0 ( Microsoft OS 2.0 Descriptors )
+; -----------------------------------------------------------------------------
+
+_msos20_dscr:
+	.db	0x0A, 0x00, 0x00, 0x00
+	.db	0x00, 0x00, 0x03, 0x06
+	.db	(msos20_dscr_end - _msos20_dscr) % 256
+	.db	(msos20_dscr_end - _msos20_dscr) / 256
+	.db	0x14, 0x00, 0x03, 0x00
+	.db	'W, 'I, 'N, 'U, 'S, 'B, 0, 0
+	.db	0, 0, 0, 0, 0, 0, 0, 0
+msos20_dscr_end:
 
 	.even
 

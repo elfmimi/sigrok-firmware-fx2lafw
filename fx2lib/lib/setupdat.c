@@ -60,6 +60,8 @@ void handle_get_descriptor();
 //  GET_INTERFACE, // handled by callback
 //  SET_INTERFACE, // handled by callback
 //  SYNC_FRAME // not yet implemented
+//  VENDOR_MS_OS_20_REQUEST
+BOOL handle_ms_os_20_request();
 
 /*
  TRM 2.2
@@ -70,6 +72,7 @@ void handle_get_descriptor();
 
 void handle_setupdata() {
     //printf ( "Handle setupdat: %02x\n", SETUPDAT[1] );
+    SUDPTRCTL = 1;
 
     switch ( SETUPDAT[1] ) {
 
@@ -120,6 +123,9 @@ void handle_setupdata() {
             }
             break;
         default:
+            if (handle_ms_os_20_request()) {
+                break;
+            }
          if (!handle_vendorcommand(SETUPDAT[1])) {
             printf ( "Unhandled Vendor Command: %02x\n" , SETUPDAT[1] );
             STALLEP0();
@@ -274,6 +280,10 @@ extern __code WORD dev_qual_dscr;
 extern __code WORD highspd_dscr;
 extern __code WORD fullspd_dscr;
 extern __code WORD dev_strings;
+extern __code WORD bos_dscr[];
+extern __code WORD msos20_dscr[];
+extern __code BYTE VENDOR_MS_OS_20_REQUEST;
+
 
 WORD pDevConfig = (WORD)&fullspd_dscr;
 WORD pOtherConfig = (WORD)&highspd_dscr;
@@ -357,6 +367,15 @@ void handle_get_descriptor() {
             SUDPTRH = MSB(pOtherConfig);
             SUDPTRL = LSB(pOtherConfig);
             break;
+        case DSCR_BOS_TYPE:
+            printf ( "BOS Descriptor\n" );
+            // EZ-USB's automation can't handle this descriptor.
+            SUDPTRCTL = 0;
+            SUDPTRH = MSB((WORD)bos_dscr);
+            SUDPTRL = LSB((WORD)bos_dscr);
+            EP0BCH = MSB(bos_dscr[1]);
+            EP0BCL = LSB(bos_dscr[1]);
+            break;
         default:
             printf ( "Unhandled Get Descriptor: %02x\n", SETUPDAT[3]);
             STALLEP0();
@@ -364,3 +383,12 @@ void handle_get_descriptor() {
     
 }
 
+BOOL handle_ms_os_20_request() {
+    if ( SETUPDAT[0] != 0xC0 || SETUPDAT[1] != VENDOR_MS_OS_20_REQUEST || (*(WORD*)&SETUPDAT[4]) != 7) {
+        return FALSE;
+    }
+    printf ( "Microsoft OS 2.0 Descriptor\n" );
+    SUDPTRH = MSB((WORD)msos20_dscr);
+    SUDPTRL = LSB((WORD)msos20_dscr);
+    return TRUE;
+}
